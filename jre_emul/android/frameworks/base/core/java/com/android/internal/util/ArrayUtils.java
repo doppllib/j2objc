@@ -16,11 +16,10 @@
 
 package com.android.internal.util;
 
-import java.lang.reflect.Array;
+import android.util.ArraySet;
 
-// XXX these should be changed to reflect the actual memory allocator we use.
-// it looks like right now objects want to be powers of 2 minus 8
-// and the array size eats another 4 bytes
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 /**
  * ArrayUtils contains some methods that you can call to find out
@@ -33,6 +32,39 @@ public class ArrayUtils
     private static Object[] sCache = new Object[CACHE_SIZE];
 
     private ArrayUtils() { /* cannot be instantiated */ }
+
+    public static byte[] newUnpaddedByteArray(int minLen) {
+        return new byte[minLen];
+    }
+
+    public static char[] newUnpaddedCharArray(int minLen) {
+        return new char[minLen];
+    }
+
+    public static int[] newUnpaddedIntArray(int minLen) {
+        return new int[minLen];
+    }
+
+    public static boolean[] newUnpaddedBooleanArray(int minLen) {
+        return new boolean[minLen];
+    }
+
+    public static long[] newUnpaddedLongArray(int minLen) {
+        return new long[minLen];
+    }
+
+    public static float[] newUnpaddedFloatArray(int minLen) {
+        return new float[minLen];
+    }
+
+    public static Object[] newUnpaddedObjectArray(int minLen) {
+        return new Object[minLen];
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T[] newUnpaddedArray(Class<T> clazz, int minLen) {
+        return (T[])Array.newInstance(clazz, minLen);
+    }
 
     public static int idealByteArraySize(int need) {
         for (int i = 4; i < 32; i++)
@@ -102,6 +134,7 @@ public class ArrayUtils
      * it will return the same empty array every time to avoid reallocation,
      * although this is not guaranteed.
      */
+    @SuppressWarnings("unchecked")
     public static <T> T[] emptyArray(Class<T> kind) {
         if (kind == Object.class) {
             return (T[]) EMPTY;
@@ -121,6 +154,27 @@ public class ArrayUtils
     }
 
     /**
+     * Checks if given array is null or has zero elements.
+     */
+    public static <T> boolean isEmpty(T[] array) {
+        return array == null || array.length == 0;
+    }
+
+    /**
+     * Checks if given array is null or has zero elements.
+     */
+    public static boolean isEmpty(int[] array) {
+        return array == null || array.length == 0;
+    }
+
+    /**
+     * Checks if given array is null or has zero elements.
+     */
+    public static boolean isEmpty(long[] array) {
+        return array == null || array.length == 0;
+    }
+
+    /**
      * Checks that value is present as at least one of the elements of the array.
      * @param array the array to check in
      * @param value the value to check for
@@ -135,6 +189,7 @@ public class ArrayUtils
      * not found.
      */
     public static <T> int indexOf(T[] array, T value) {
+        if (array == null) return -1;
         for (int i = 0; i < array.length; i++) {
             if (array[i] == null) {
                 if (value == null) return i;
@@ -149,6 +204,7 @@ public class ArrayUtils
      * Test if all {@code check} items are contained in {@code array}.
      */
     public static <T> boolean containsAll(T[] array, T[] check) {
+        if (check == null) return true;
         for (T checkItem : check) {
             if (!contains(array, checkItem)) {
                 return false;
@@ -158,7 +214,18 @@ public class ArrayUtils
     }
 
     public static boolean contains(int[] array, int value) {
+        if (array == null) return false;
         for (int element : array) {
+            if (element == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean contains(long[] array, long value) {
+        if (array == null) return false;
+        for (long element : array) {
             if (element == value) {
                 return true;
             }
@@ -226,6 +293,14 @@ public class ArrayUtils
         return array;
     }
 
+    /**
+     * Appends a new value to a copy of the array and returns the copy.  If
+     * the value is already present, the original array is returned
+     * @param cur The original array, or null to represent an empty array.
+     * @param val The value to add.
+     * @return A new array that contains all of the values of the original array
+     * with the new value added, or the original array.
+     */
     public static int[] appendInt(int[] cur, int val) {
         if (cur == null) {
             return new int[] { val };
@@ -260,5 +335,101 @@ public class ArrayUtils
             }
         }
         return cur;
+    }
+
+    /**
+     * Appends a new value to a copy of the array and returns the copy.  If
+     * the value is already present, the original array is returned
+     * @param cur The original array, or null to represent an empty array.
+     * @param val The value to add.
+     * @return A new array that contains all of the values of the original array
+     * with the new value added, or the original array.
+     */
+    public static long[] appendLong(long[] cur, long val) {
+        if (cur == null) {
+            return new long[] { val };
+        }
+        final int N = cur.length;
+        for (int i = 0; i < N; i++) {
+            if (cur[i] == val) {
+                return cur;
+            }
+        }
+        long[] ret = new long[N + 1];
+        System.arraycopy(cur, 0, ret, 0, N);
+        ret[N] = val;
+        return ret;
+    }
+
+    public static long[] removeLong(long[] cur, long val) {
+        if (cur == null) {
+            return null;
+        }
+        final int N = cur.length;
+        for (int i = 0; i < N; i++) {
+            if (cur[i] == val) {
+                long[] ret = new long[N - 1];
+                if (i > 0) {
+                    System.arraycopy(cur, 0, ret, 0, i);
+                }
+                if (i < (N - 1)) {
+                    System.arraycopy(cur, i + 1, ret, i, N - i - 1);
+                }
+                return ret;
+            }
+        }
+        return cur;
+    }
+
+    public static long[] cloneOrNull(long[] array) {
+        return (array != null) ? array.clone() : null;
+    }
+
+    public static <T> ArraySet<T> add(ArraySet<T> cur, T val) {
+        if (cur == null) {
+            cur = new ArraySet<T>();
+        }
+        cur.add(val);
+        return cur;
+    }
+
+    public static <T> ArraySet<T> remove(ArraySet<T> cur, T val) {
+        if (cur == null) {
+            return null;
+        }
+        cur.remove(val);
+        if (cur.isEmpty()) {
+            return null;
+        } else {
+            return cur;
+        }
+    }
+
+    public static <T> boolean contains(ArraySet<T> cur, T val) {
+        return (cur != null) ? cur.contains(val) : false;
+    }
+
+    public static <T> ArrayList<T> add(ArrayList<T> cur, T val) {
+        if (cur == null) {
+            cur = new ArrayList<T>();
+        }
+        cur.add(val);
+        return cur;
+    }
+
+    public static <T> ArrayList<T> remove(ArrayList<T> cur, T val) {
+        if (cur == null) {
+            return null;
+        }
+        cur.remove(val);
+        if (cur.isEmpty()) {
+            return null;
+        } else {
+            return cur;
+        }
+    }
+
+    public static <T> boolean contains(ArrayList<T> cur, T val) {
+        return (cur != null) ? cur.contains(val) : false;
     }
 }

@@ -71,6 +71,8 @@ NATIVE_JRE_SOURCES_CORE = \
 JAVA_PUBLIC_SOURCES_CORE = \
   android/system/ErrnoException.java \
   com/google/j2objc/util/logging/IOSLogHandler.java \
+  dalvik/system/BlockGuard.java \
+  dalvik/system/CloseGuard.java \
   java/io/BufferedInputStream.java \
   java/io/BufferedOutputStream.java \
   java/io/BufferedReader.java \
@@ -520,8 +522,6 @@ JAVA_PRIVATE_SOURCES_CORE = \
   com/google/j2objc/nio/charset/IconvCharsetDecoder.java \
   com/google/j2objc/nio/charset/IconvCharsetEncoder.java \
   com/google/j2objc/util/NativeTimeZone.java \
-  dalvik/system/BlockGuard.java \
-  dalvik/system/CloseGuard.java \
   java/io/EmulatedFields.java \
   java/io/EmulatedFieldsForDumping.java \
   java/io/EmulatedFieldsForLoading.java \
@@ -1536,10 +1536,12 @@ JAVA_PUBLIC_SOURCES_XMLPULL = \
   org/xmlpull/v1/XmlPullParserException.java \
   org/xmlpull/v1/XmlPullParserFactory.java \
   org/xmlpull/v1/XmlSerializer.java \
-  org/xmlpull/v1/sax2/Driver.java
+  org/xmlpull/v1/sax2/Driver.java \
+  org/kxml2/io/KXmlParser.java \
+  org/kxml2/io/KXmlSerializer.java \
+  libcore/internal/StringPool.java
 
 JAVA_PRIVATE_SOURCES_XML = \
-  libcore/internal/StringPool.java \
   org/apache/harmony/xml/dom/AttrImpl.java \
   org/apache/harmony/xml/dom/CDATASectionImpl.java \
   org/apache/harmony/xml/dom/CharacterDataImpl.java \
@@ -1563,9 +1565,7 @@ JAVA_PRIVATE_SOURCES_XML = \
   org/apache/harmony/xml/parsers/DocumentBuilderFactoryImpl.java \
   org/apache/harmony/xml/parsers/DocumentBuilderImpl.java \
   org/apache/harmony/xml/parsers/SAXParserFactoryImpl.java \
-  org/apache/harmony/xml/parsers/SAXParserImpl.java \
-  org/kxml2/io/KXmlParser.java \
-  org/kxml2/io/KXmlSerializer.java
+  org/apache/harmony/xml/parsers/SAXParserImpl.java
 
 NATIVE_JRE_SOURCES_ZIP = \
   io_util.m \
@@ -1742,6 +1742,7 @@ ANDROID_PUBLIC_SOURCES = \
   android/util/Base64DataException.java \
   android/util/Base64InputStream.java \
   android/util/Base64OutputStream.java \
+  android/util/ContainerHelpers.java \
   android/util/Log.java \
   android/util/LruCache.java \
   android/util/MapCollections.java \
@@ -1751,19 +1752,18 @@ ANDROID_PUBLIC_SOURCES = \
   android/util/SparseBooleanArray.java \
   android/util/SparseIntArray.java \
   android/util/SparseLongArray.java \
+  com/android/internal/util/ArrayUtils.java \
   org/json/JSON.java \
   org/json/JSONArray.java \
   org/json/JSONException.java \
   org/json/JSONObject.java \
   org/json/JSONStringer.java \
-  org/json/JSONTokener.java
-
-ANDROID_PRIVATE_SOURCES = \
-  android/util/ContainerHelpers.java \
-  com/android/internal/util/ArrayUtils.java \
+  org/json/JSONTokener.java \
   com/google/android/collect/Lists.java \
   com/google/android/collect/Maps.java \
   com/google/android/collect/Sets.java
+
+ANDROID_PRIVATE_SOURCES =
 
 JAVA_SOURCES_CORE = $(JAVA_PUBLIC_SOURCES_CORE) $(JAVA_PRIVATE_SOURCES_CORE)
 JAVA_SOURCES_OTHER = $(JAVA_PUBLIC_SOURCES_OTHER) $(JAVA_PRIVATE_SOURCES_OTHER)
