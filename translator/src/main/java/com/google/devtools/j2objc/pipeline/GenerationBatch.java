@@ -47,8 +47,12 @@ public class GenerationBatch {
 
   private final List<ProcessingContext> inputs = Lists.newArrayList();
 
+  GenerationUnit globalCombinedUnit = null;
+
   public GenerationBatch(Options options){
     this.options = options;
+    if(options.globalCombinedOutput() != null)
+      globalCombinedUnit = GenerationUnit.newCombinedJarUnit(options.globalCombinedOutput(), options);
   }
 
   public List<ProcessingContext> getInputs() {
@@ -67,7 +71,11 @@ public class GenerationBatch {
         || (options.translateClassfiles() && filename.endsWith(".class"))) {
       processJavaFile(filename);
     } else {
-      processJarFile(filename);
+      if(options.getHeaderMap().proccessDirectories() && new File(filename).isDirectory()) {
+        processJavaFolder(filename);
+      } else {
+        processJarFile(filename);
+      }
     }
   }
 
@@ -115,6 +123,55 @@ public class GenerationBatch {
     return null;
   }
 
+
+  private void processJavaFolder(String filename) {
+
+    File javaFolder = new File(filename);
+    if(!javaFolder.exists() || !javaFolder.isDirectory())
+    {
+      ErrorUtil.error("Not a directory: " + filename);
+      return;
+    }
+
+    GenerationUnit combinedUnit = null;
+    if(globalCombinedUnit != null){
+      combinedUnit = globalCombinedUnit;
+    }else if (options.getHeaderMap().combineSourceJars()) {
+      combinedUnit = GenerationUnit.newCombinedJarUnit(safeFileName(filename), options);
+    }
+
+    options.fileUtil().appendSourcePath(javaFolder.getAbsolutePath());
+
+    processJavaFolder(filename, javaFolder.getAbsolutePath() + File.separator, javaFolder, combinedUnit);
+  }
+
+  private String safeFileName(String s)
+  {
+    return s.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+  }
+
+  private void processJavaFolder(String filename, String baseDirPath, File currentDir, GenerationUnit combinedUnit )
+  {
+    File[] files = currentDir.listFiles();
+    for (File file : files) {
+      if(file.isDirectory()){
+        processJavaFolder(filename, baseDirPath, file, combinedUnit);
+      }
+      else {
+        String internalPath = file.getAbsolutePath().substring(baseDirPath.length());
+        if (internalPath.endsWith(".java")) {
+
+          InputFile newFile = new RegularInputFile(file.getAbsolutePath(), internalPath);
+          if (combinedUnit != null) {
+            inputs.add(new ProcessingContext(newFile, combinedUnit));
+          } else {
+            addExtractedJarSource(newFile, filename, internalPath);
+          }
+        }
+      }
+    }
+  }
+
   private void processJarFile(String filename) {
     File f = findJarFile(filename);
     if (f == null) {
@@ -129,7 +186,9 @@ public class GenerationBatch {
     }
 
     GenerationUnit combinedUnit = null;
-    if (options.getHeaderMap().combineSourceJars()) {
+    if(globalCombinedUnit != null){
+      combinedUnit = globalCombinedUnit;
+    }else if (options.getHeaderMap().combineSourceJars()) {
       combinedUnit = GenerationUnit.newCombinedJarUnit(filename, options);
     }
     try {
@@ -177,6 +236,10 @@ public class GenerationBatch {
    */
   @VisibleForTesting
   public void addSource(InputFile file) {
-    inputs.add(ProcessingContext.fromFile(file, options));
+    if(globalCombinedUnit != null){
+      inputs.add(new ProcessingContext(file, globalCombinedUnit));
+    }else{
+      inputs.add(ProcessingContext.fromFile(file, options));
+    }
   }
 }

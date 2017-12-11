@@ -19,3 +19,5 @@ dist/
 # IntelliJ IDEA Files
 *.iml
 .idea
+
+doppldist*.zip

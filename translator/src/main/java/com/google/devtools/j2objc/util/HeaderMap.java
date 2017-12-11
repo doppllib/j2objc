@@ -46,6 +46,7 @@ public class HeaderMap {
   private static final Set<String> PLATFORM_PACKAGES = Sets.newHashSet(new String[] {
       "android",
       "com.android.internal.util",
+          "com.google.android",
       "com.google.common",
       "com.google.common.annotations",
       "com.google.common.base",
@@ -98,6 +99,10 @@ public class HeaderMap {
   // Variant of SOURCE style. Sources from .jar files are combined into a single output header and
   // source file.
   private boolean combineJars = false;
+
+  // Use input directories similar to processing a jar, but a directory.
+  private boolean proccessDirectories = false;
+
   // Variant of SOURCE style. Annotation generated sources are included in the same output as the
   // source they are generated from.
   private boolean includeGeneratedSources = false;
@@ -113,6 +118,11 @@ public class HeaderMap {
   public void setCombineJars() {
     outputStyle = OutputStyleOption.SOURCE;
     combineJars = true;
+  }
+
+  public void setProccessDirectories() {
+    outputStyle = OutputStyleOption.SOURCE;
+    proccessDirectories = true;
   }
 
   public void setIncludeGeneratedSources() {
@@ -143,6 +153,10 @@ public class HeaderMap {
 
   public boolean combineSourceJars() {
     return outputStyle == OutputStyleOption.SOURCE && combineJars;
+  }
+
+  public boolean proccessDirectories() {
+    return proccessDirectories;
   }
 
   public boolean includeGeneratedSources() {
