@@ -120,8 +120,7 @@ public class ClassFileConverter {
    */
   private void setClassPath() throws IOException {
     String fullPath = file.getAbsolutePath();
-    String relativePath = classFile.getFullName().replace('.',  '/') + ".class";
-    String rootPath = fullPath.substring(0, fullPath.lastIndexOf(relativePath));
+    String rootPath = fullPath.substring(0, fullPath.lastIndexOf(classFile.getRelativePath()));
     List<File> classPath = new ArrayList<>();
     classPath.add(new File(rootPath));
     parserEnv.fileManager().setLocation(StandardLocation.CLASS_PATH, classPath);
@@ -156,7 +155,8 @@ public class ClassFileConverter {
         break;
       case CONSTRUCTOR:
       case METHOD:
-        node = convertMethodDeclaration((ExecutableElement) element, (TypeDeclaration) parent);
+        node = convertMethodDeclaration(
+            (ExecutableElement) element, (AbstractTypeDeclaration) parent);
         break;
       case ENUM:
         node = convertEnumDeclaration((TypeElement) element);
@@ -280,7 +280,10 @@ public class ClassFileConverter {
     TypeDeclaration typeDecl = new TypeDeclaration(element);
     convertBodyDeclaration(typeDecl, element);
     for (Element elem : element.getEnclosedElements()) {
-      typeDecl.addBodyDeclaration((BodyDeclaration) convert(elem, typeDecl));
+      // Ignore inner types, as they are defined by other classfiles.
+      if (!elem.getKind().isClass() && !elem.getKind().isInterface()) {
+        typeDecl.addBodyDeclaration((BodyDeclaration) convert(elem, typeDecl));
+      }
     }
     if (typeDecl.isInterface()) {
       removeInterfaceModifiers(typeDecl);
@@ -292,7 +295,8 @@ public class ClassFileConverter {
     return translationEnv.typeUtil().getMethodDescriptor((ExecutableType) exec.asType());
   }
 
-  private TreeNode convertMethodDeclaration(ExecutableElement element, TypeDeclaration node) {
+  private TreeNode convertMethodDeclaration(ExecutableElement element,
+      AbstractTypeDeclaration node) {
     MethodDeclaration methodDecl = new MethodDeclaration(element);
     convertBodyDeclaration(methodDecl, element);
     HashMap<String, VariableElement> localVariableTable = new HashMap<>();
